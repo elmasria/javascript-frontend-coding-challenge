@@ -20,7 +20,7 @@ new Autocomplete(document.getElementById('gh-user'), {
 
 ```
 
-### Sescription:
+### Description:
 
 `{query}` and `{numOfResults}` will be replaced with the values based on user input and the initial `numOfResults`.
 
@@ -32,6 +32,8 @@ Now if you type `foo` in the input, the component dropdown shows *Github* users 
 
 The user now can use the **up**, **down** and **Tab** `keys` to navigate the results drop-down.
 
-### Details
+### Description
 
-Navigating the results lead to having focus style on elements current navigated element. and if user click `Enter` or the `mouse click` the item will be styled as active element and show the selected item in a search field.
+Navigating the results lead to 
+* Having focus style on the current navigated element. and if user click `Enter` or the `mouse click` the item will be styled as an active element 
+* Show the selected item in a search field.
