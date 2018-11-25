@@ -1,30 +1,73 @@
 export default class Autocomplete {
   constructor(rootEl, options = {}) {
-    options = Object.assign({ numOfResults: 10, data: [] }, options);
+    options = Object.assign({
+      previousFocus: '',
+      previousSelected: '',
+      numOfResults: 10,
+      data: [],
+      endPoint: ''
+    }, options);
     Object.assign(this, { rootEl, options });
 
-    this.previousFocus = '';
-    this.previousSelected = '';
 
     this.init();
   }
 
   onQueryChange(query) {
-    // Get data for the dropdown
-    let results = this.getResults(query, this.options.data);
-    results = results.slice(0, this.options.numOfResults);
 
-    this.updateDropdown(results);
+    // Get data for the dropdown
+    if (this.options.data.length > 0) {
+
+      let results = this.getResults(query, this.options.data);
+      results = results.slice(0, this.options.numOfResults);
+
+      this.updateDropdown(results);
+
+    }else if(this.options.endPoint) {
+      this.getEndPointResults(query, this.options.endPoint);
+    }
+
+
   }
 
+  /*
+   * Given query and http endpoint update the dropdown based on result 
+   */
+  getEndPointResults(query, endPoint) {
+    let expression = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
+    let regex = new RegExp(expression);
+    let results = [];
+    
+    let currentScope = this;
+    endPoint = endPoint.replace('{query}', query);
+    endPoint = endPoint.replace('{numOfResults}', this.options.numOfResults);
+    fetch(endPoint)
+      .then(function(response) {
+        return response.json();
+      }).then(function(data) {
+        console.log(data.items);
+        results = [];
+        data.items.forEach((item) => {
+          let resultItem = {};
+          resultItem.text = item.login
+          resultItem.value = item.id
+          results.push(resultItem)
+        });
+        currentScope.updateDropdown(results);
+      }).catch(function(error) {
+        console.log('Request failed', error)
+      });
+
+  }
   /**
    * Given an array and a query, return a filtered array based on the query.
    */
   getResults(query, data) {
     if (!query) return [];
+    let results = [];
 
     // Filter for matching strings
-    let results = data.filter((item) => {
+    results = data.filter((item) => {
       return item.text.toLowerCase().includes(query.toLowerCase());
     });
 
@@ -49,11 +92,21 @@ export default class Autocomplete {
       // Pass the value to the onSelect callback
       el.addEventListener('click', (event) => {
         this.selectElement(event, result);
-
       });
-  
+
+      // prevent scrolling  
+      el.addEventListener('keydown', (event) => {
+        switch (event.keyCode) {
+          case 38: // up
+          case 40: // bottom
+            event.preventDefault();
+            break;
+        }
+      });
+
       // Handle up, down,tab and enter key 
       el.addEventListener('keyup', (event) => {
+        event.preventDefault();
         switch (event.keyCode) {
           case 38: // up
             if (event.target.previousSibling) {
@@ -90,7 +143,7 @@ export default class Autocomplete {
     });
     return fragment;
   }
-  
+
   /**
    * Add select style for the element 
    * clean focus if user use click (mouse event)
@@ -107,8 +160,8 @@ export default class Autocomplete {
 
     event.target.classList.add('active');
     this.previousSelected = event.target;
-    
-    this.inputEl.value =  result.text;
+
+    this.inputEl.value = result.text;
   }
 
   /**
@@ -121,9 +174,9 @@ export default class Autocomplete {
     }
     if (elem) {
       elem.classList.add('focus');
-      this.previousFocus = elem;  
+      this.previousFocus = elem;
     }
-    
+
   }
 
   createQueryInputEl() {
@@ -144,7 +197,7 @@ export default class Autocomplete {
     // Build query input
     this.inputEl = this.createQueryInputEl();
     this.rootEl.appendChild(this.inputEl);
-    
+
     // remove focus from li if user select input
     this.inputEl.addEventListener('focus', (event) => {
       this.cleanAddFocus();
