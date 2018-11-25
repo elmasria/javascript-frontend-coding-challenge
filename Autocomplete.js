@@ -7,7 +7,10 @@ export default class Autocomplete {
       data: [],
       endPoint: ''
     }, options);
-    Object.assign(this, { rootEl, options });
+    Object.assign(this, {
+      rootEl,
+      options
+    });
 
 
     this.init();
@@ -23,7 +26,8 @@ export default class Autocomplete {
 
       this.updateDropdown(results);
 
-    }else if(this.options.endPoint) {
+    }
+    else if (this.options.endPoint) {
       this.getEndPointResults(query, this.options.endPoint);
     }
 
@@ -37,15 +41,14 @@ export default class Autocomplete {
     let expression = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
     let regex = new RegExp(expression);
     let results = [];
-    
+
     let currentScope = this;
     endPoint = endPoint.replace('{query}', query);
     endPoint = endPoint.replace('{numOfResults}', this.options.numOfResults);
     fetch(endPoint)
       .then(function(response) {
         return response.json();
-      }).then(function(data) {
-        console.log(data.items);
+      }).then(function(data) { 
         results = [];
         data.items.forEach((item) => {
           let resultItem = {};
@@ -59,6 +62,7 @@ export default class Autocomplete {
       });
 
   }
+
   /**
    * Given an array and a query, return a filtered array based on the query.
    */
@@ -150,7 +154,9 @@ export default class Autocomplete {
    * call the onSelect function 
    */
   selectElement(event, result) {
-    const { onSelect } = this.options;
+    const {
+      onSelect
+    } = this.options;
     if (typeof onSelect === 'function') onSelect(result.value);
     // remove focus if the user click on li
     if (event.type === 'click') this.cleanAddFocus(event.target);
@@ -226,7 +232,9 @@ export default class Autocomplete {
 
     // Build results dropdown
     this.listEl = document.createElement('ul');
-    Object.assign(this.listEl, { className: 'results' });
+    Object.assign(this.listEl, {
+      className: 'results'
+    });
     this.rootEl.appendChild(this.listEl);
   }
 }
