@@ -3,6 +3,9 @@ export default class Autocomplete {
     options = Object.assign({ numOfResults: 10, data: [] }, options);
     Object.assign(this, { rootEl, options });
 
+    this.previousFocus = '';
+    this.previousSelected = '';
+
     this.init();
   }
 
@@ -40,17 +43,87 @@ export default class Autocomplete {
       Object.assign(el, {
         className: 'result',
         textContent: result.text,
+        tabIndex: 0
       });
 
       // Pass the value to the onSelect callback
       el.addEventListener('click', (event) => {
-        const { onSelect } = this.options;
-        if (typeof onSelect === 'function') onSelect(result.value);
+        this.selectElement(event, result);
+
+      });
+  
+      // Handle up, down,tab and enter key 
+      el.addEventListener('keyup', (event) => {
+        switch (event.keyCode) {
+          case 38: // up
+            if (event.target.previousSibling) {
+              event.target.previousSibling.focus();
+              this.cleanAddFocus(event.target.previousSibling);
+            }
+            else {
+              this.listEl.lastElementChild.focus();
+              this.cleanAddFocus(this.listEl.lastElementChild);
+            }
+            break;
+          case 40: // bottom
+            if (event.target.nextSibling) {
+              event.target.nextSibling.focus();
+              this.cleanAddFocus(event.target.nextSibling);
+            }
+            else {
+              this.listEl.firstElementChild.focus();
+              this.cleanAddFocus(this.listEl.firstElementChild);
+            }
+            break;
+          case 9: // tab
+            this.cleanAddFocus(event.target);
+            break;
+          case 13: // enter key
+            this.cleanAddFocus(event.target);
+            this.selectElement(event, result);
+            break;
+        }
+
       });
 
       fragment.appendChild(el);
     });
     return fragment;
+  }
+  
+  /**
+   * Add select style for the element 
+   * clean focus if user use click (mouse event)
+   * call the onSelect function 
+   */
+  selectElement(event, result) {
+    const { onSelect } = this.options;
+    if (typeof onSelect === 'function') onSelect(result.value);
+    // remove focus if the user click on li
+    if (event.type === 'click') this.cleanAddFocus(event.target);
+    if (this.previousSelected) {
+      this.previousSelected.classList.remove('active');
+    }
+
+    event.target.classList.add('active');
+    this.previousSelected = event.target;
+    
+    this.inputEl.value =  result.text;
+  }
+
+  /**
+   * Remove focus style from previous element and add it to the new one
+   */
+  cleanAddFocus(elem) {
+    if (this.previousFocus) {
+      this.previousFocus.classList.remove('focus');
+      this.previousFocus = '';
+    }
+    if (elem) {
+      elem.classList.add('focus');
+      this.previousFocus = elem;  
+    }
+    
   }
 
   createQueryInputEl() {
@@ -70,7 +143,33 @@ export default class Autocomplete {
   init() {
     // Build query input
     this.inputEl = this.createQueryInputEl();
-    this.rootEl.appendChild(this.inputEl)
+    this.rootEl.appendChild(this.inputEl);
+    
+    // remove focus from li if user select input
+    this.inputEl.addEventListener('focus', (event) => {
+      this.cleanAddFocus();
+    });
+
+    // help user enter the list directly using the key up/down 
+    this.inputEl.addEventListener('keyup', (event) => {
+
+      if (this.listEl.children && this.listEl.children.length > 0) {
+        switch (event.keyCode) {
+          case 38: // up 
+
+            this.listEl.lastElementChild.focus();
+            this.cleanAddFocus(this.listEl.lastElementChild);
+
+            break;
+          case 40: // bottom
+            this.listEl.firstElementChild.focus();
+            this.cleanAddFocus(this.listEl.firstElementChild);
+
+            break;
+        }
+      }
+
+    });
 
     // Build results dropdown
     this.listEl = document.createElement('ul');

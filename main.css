@@ -29,15 +29,21 @@ ul {
   padding: 5px;
   cursor: pointer;
 }
-.result:hover {
+
+.result:hover,
+.result.focus {
   background-color: #eee;
+}
+
+.result.active {
+  background-color: #c8d2ff;
 }
 
 form {
   display: flex;
 }
 
-.form-group + .form-group {
+.form-group+.form-group {
   margin-left: 50px;
 }
 
